@@ -1,8 +1,10 @@
 package com.drake.view;
 
 import java.awt.BorderLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.Box;
@@ -18,15 +20,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.TableModel;
 
+import com.drake.model.Book;
 import com.drake.model.BookTableModel;
 import com.drake.service.BookService;
 import com.drake.util.ViewUtil;
 
 @SuppressWarnings("serial")
 public class MainView extends JFrame {
-	private JTable bookListTable;
 	
 	public MainView() {
 		initUI();
@@ -46,12 +47,11 @@ public class MainView extends JFrame {
 		
 		
         setTitle("GDUT 图书管理系统");
-        setSize(450, 300);
+        setSize(500, 450);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         
 	}
-
 
 	// 右侧工具栏
 	public JToolBar createToolBar() {
@@ -66,26 +66,7 @@ public class MainView extends JFrame {
 		editBtn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				TableModel bookTableModel = bookListTable.getModel();
-				int selectedRowIndex = bookListTable.getSelectedRow();
-
-				// 获取选中行数据
-				Object selectedIsbn = bookTableModel.getValueAt(selectedRowIndex, 0);
-				Object selectedTitle = bookTableModel.getValueAt(selectedRowIndex, 1);
-				Object selectedAuthor = bookTableModel.getValueAt(selectedRowIndex, 2);
-				Object selectedPrice = bookTableModel.getValueAt(selectedRowIndex, 3);
-				
-				
-				BookService bookService = new BookService();
-				Map<String, Object> result = bookService
-						.update(selectedIsbn, selectedTitle, selectedAuthor, selectedPrice);
-
-				JPanel panel = (JPanel) getContentPane();
-				if (!(boolean) result.get("success")) {
-					ViewUtil.showErrorMsg(panel, (String) result.get("msg"));
-				} else {
-					ViewUtil.showSuccessMsg(panel, (String) result.get("msg"));
-				}
+				new EditBookView(getBookListTable());
 			}
 		});
 		
@@ -103,9 +84,24 @@ public class MainView extends JFrame {
 				JPanel panel = (JPanel)getContentPane();
 				if (!(boolean)result.get("success")) {
 					ViewUtil.showErrorMsg(panel, (String)result.get("msg"));
+					
 				} else {
+					// 为了更新MainView里面的book table　= =!
+					List<Book> bookList =  bookService.query(); // 获取所有书籍
+					BookTableModel bookTableModel = new BookTableModel();
+					bookTableModel.setData(bookList);
+					getBookListTable().setModel(bookTableModel);
+					
 					ViewUtil.showSuccessMsg(panel, (String)result.get("msg"));
 				}
+			}
+		});
+		
+		// 添加书本
+		addBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new AddBookView(getBookListTable());
 			}
 		});
 		
@@ -123,7 +119,7 @@ public class MainView extends JFrame {
 		toolbar.add(findBtn);
 		toolbar.setFloatable(false);
 		
-//		toolbar.setMargin(new Insets(10, 5, 5, 5));
+		toolbar.setMargin(new Insets(10, 5, 5, 5));
 		return toolbar;
 	}
 	
@@ -144,7 +140,7 @@ public class MainView extends JFrame {
 	    tableModel.setData(bookService.query());
 	    
 	    JTable bookTable = new JTable(tableModel);
-	    this.bookListTable = bookTable;
+	    setBookListTable(bookTable);
 	    bookTable.setFillsViewportHeight(true);
 	    
 	    JScrollPane scrollPane = new JScrollPane(bookTable);
@@ -178,7 +174,7 @@ public class MainView extends JFrame {
 		addItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				new BookView();
+				new AddBookView(getBookListTable());
 			}
 		});
 		
@@ -239,4 +235,14 @@ public class MainView extends JFrame {
 		
 		return help;
 	}
+
+	public JTable getBookListTable() {
+		return bookListTable;
+	}
+
+	public void setBookListTable(JTable bookListTable) {
+		this.bookListTable = bookListTable;
+	}
+	
+	private JTable bookListTable;
 }

@@ -12,7 +12,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.table.TableModel;
 
 import com.drake.model.Book;
 import com.drake.model.BookTableModel;
@@ -20,18 +19,20 @@ import com.drake.service.BookService;
 import com.drake.util.ViewUtil;
 
 @SuppressWarnings("serial")
-public class EditBookView extends JFrame {
+public class AddBookView extends JFrame {
 	
-	public EditBookView(JTable bookTable) {
+	public AddBookView() {
+		initUI();
+	}
+	public AddBookView(JTable bookTable) {
 		setBookTable(bookTable);
 		initUI();
 	}
 
 	private void initUI() {
 		createBookForm();
-		fillForm();
 		
-        setTitle("GDUT 图书管理系统 - 编辑书籍");
+        setTitle("GDUT 图书管理系统 - 添加书籍");
         setSize(350, 300);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -39,9 +40,8 @@ public class EditBookView extends JFrame {
 	}
 
 	private void createBookForm() {
-		setLayout(new GridLayout(6, 2, 5, 5));
+		setLayout(new GridLayout(5, 2, 5, 5));
 		
-		add(new JLabel("你正在更新书本信息: "));
 		add(createField("isbn: "));
 		add(createField("书名: "));
 		add(createField("作者: "));
@@ -64,7 +64,7 @@ public class EditBookView extends JFrame {
 				String author = getAuthorField().getText();
 				String price = getPriceField().getText();
 				
-				Map<String, Object> result = bookService.update(isbn, title, author, price);
+				Map<String, Object> result = bookService.add(isbn, title, author, price);
 
 				JPanel panel = (JPanel) getContentPane();
 				if (!(boolean) result.get("success")) {
@@ -109,23 +109,9 @@ public class EditBookView extends JFrame {
 		return panel;
 	}
 	
-	// 填充表单
-	public void fillForm() {
-		JTable bookTable = getBookTable();
-		TableModel bookTabelModel = bookTable.getModel();
-		int selectedRow = bookTable.getSelectedRow();
-		
-		String isbn = bookTabelModel.getValueAt(selectedRow, 0).toString();
-		String title = (String) bookTabelModel.getValueAt(selectedRow, 1);
-		String author = (String) bookTabelModel.getValueAt(selectedRow, 2);
-		String price = bookTabelModel.getValueAt(selectedRow, 3).toString();
-		
-		getIsbnField().setText(isbn);
-		getTitleField().setText(title);
-		getAuthorField().setText(author);
-		getPriceField().setText(price);
-	}
-	
+//	public static void main(String[] args) {
+//		new AddBookView();
+//	}
 	
 	// getters and setters
 	public JTextField getIsbnField() {
