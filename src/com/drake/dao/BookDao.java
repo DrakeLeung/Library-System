@@ -54,6 +54,7 @@ public class BookDao {
 		}
 	}
 
+	// 根据isbn查询书本
 	public Book get(int isbn) {
 		Book book = new Book();
 		
@@ -81,6 +82,35 @@ public class BookDao {
 		}
 		
 		return book;
+	}
+	
+	public List<Book> getBorrowed() {
+		List<Book> bookBorrowed = new LinkedList<Book>();
+		Connection conn = DBUtil.getConnection();
+		ResultSet rs = null;
+		
+		try {
+			// 先找出用户借过的书的isbn
+			Statement st = conn.createStatement();
+			String sql = "SELECT * FROM book WHERE isBorrowed=false";
+			rs = st.executeQuery(sql);
+			
+			while (rs.next()) {
+				Book book = new Book();
+				
+				book.setIsbn(rs.getInt("isbn"));
+				book.setTitle(rs.getString("title"));
+				book.setAuthor(rs.getString("author"));
+				book.setPrice(rs.getFloat("price"));
+//				book.setIsBorrowed(rs.getBoolean("isBorrowed"));
+				
+				bookBorrowed.add(book);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return bookBorrowed;
 	}
 	
 	public List<Book> query() {
@@ -160,6 +190,29 @@ public class BookDao {
 			pst.setDouble(3,  book.getPrice());
 			pst.setBoolean(4, book.getIsBorrowed());
 			pst.setInt(5, book.getIsbn());
+			
+			pst.execute();
+			
+		} catch (SQLException e) {
+			
+			e.printStackTrace();
+		}
+		
+	}
+	
+	// 借/还书
+	public void borrow(int isbn, boolean isBorrow) {
+		Connection conn = DBUtil.getConnection();
+		
+		String sql = "UPDATE book" + 
+				" SET isBorrowed=?" + 
+				" WHERE isbn=?";
+		
+		try {
+			PreparedStatement pst = conn.prepareStatement(sql);
+			
+			pst.setBoolean(1, isBorrow);
+			pst.setInt(2, isbn);
 			
 			pst.execute();
 			

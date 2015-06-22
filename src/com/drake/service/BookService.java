@@ -116,6 +116,13 @@ public class BookService {
 		return bookDao.query();
 	}
 	
+	// 查询可借的书籍
+	public List<Book> getBorrowed() {
+		BookDao bookDao = new BookDao();
+		
+		return bookDao.getBorrowed();
+	}
+	
 	// 更新书籍
 	public Map<String, Object> update(Object isbn, Object title, Object author, Object price) {
 		Map<String, Object> result = new HashMap<String, Object>();
@@ -159,6 +166,18 @@ public class BookService {
 		bookDao.update(book);
 		result.put("success", true);
 		result.put("msg", "更新成功");
+		
+		return result;
+	}
+	
+	// 借／还书
+	public Map<String, Object> borrow(int isbn, boolean isBorrow) {
+		Map<String, Object> result = new HashMap<String, Object>();
+		BookDao bookDao = new BookDao();
+		
+		bookDao.borrow(isbn, isBorrow);
+		result.put("success", true);
+		result.put("msg", isBorrow ? "已成功借阅" : "已归还成功");
 		
 		return result;
 	}

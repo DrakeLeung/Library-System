@@ -1,6 +1,7 @@
 package com.drake.view;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -20,21 +21,24 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 
 import com.drake.model.Book;
 import com.drake.model.BookTableModel;
+import com.drake.model.User;
 import com.drake.service.BookService;
 import com.drake.util.ViewUtil;
 
 @SuppressWarnings("serial")
 public class MainView extends JFrame {
 	
-	public MainView() {
+	public MainView(User user) {
+		setUser(user);
 		initUI();
 	}
 
 	// 初始化界面
-	private void initUI() {
+	public void initUI() {
 		createMenuBar();
 		
 		add(createToolBar(), BorderLayout.EAST);
@@ -45,12 +49,18 @@ public class MainView extends JFrame {
 		title.setHorizontalAlignment(JLabel.CENTER);
 		add(title, BorderLayout.NORTH);
 		
+        JLabel statusbar = new JLabel("你好, " + 
+        		getUser().getUsername() + " . 欢迎使用GDUT图书管理系统．");
+        statusbar.setPreferredSize(new Dimension(-1, 22));
+        statusbar.setBorder(LineBorder.createGrayLineBorder());
+        add(statusbar, BorderLayout.SOUTH);
+		
 		
         setTitle("GDUT 图书管理系统");
         setSize(500, 450);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        
+        setVisible(true);
 	}
 
 	// 右侧工具栏
@@ -239,10 +249,17 @@ public class MainView extends JFrame {
 	public JTable getBookListTable() {
 		return bookListTable;
 	}
-
 	public void setBookListTable(JTable bookListTable) {
 		this.bookListTable = bookListTable;
 	}
+	public User getUser() {
+		return user;
+	}
+	public void setUser(User user) {
+		this.user = user;
+	}
 	
 	private JTable bookListTable;
+	private User user;
+
 }

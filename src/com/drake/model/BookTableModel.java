@@ -66,9 +66,9 @@ public class BookTableModel extends AbstractTableModel {
 		fireTableDataChanged();
 	}
 	
-	public boolean isCellEditable(int row, int col) {
-		return true;
-	}
+//	public boolean isCellEditable(int row, int col) {
+//		return true;
+//	}
 
 	@Override
 	public void setValueAt(Object value, int rowIndex, int colIndex) {
