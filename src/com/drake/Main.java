@@ -1,7 +1,6 @@
 package com.drake;
 
 import com.drake.view.LoginView;
-import com.drake.view.MainView;
 
 public class Main {
 
