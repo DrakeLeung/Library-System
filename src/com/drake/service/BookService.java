@@ -116,11 +116,20 @@ public class BookService {
 		return bookDao.query();
 	}
 	
-	// 查询可借的书籍
-	public List<Book> getBorrowed() {
+	// 查询已借的书籍
+	public List<Book> getBorrowed(int userId) {
 		BookDao bookDao = new BookDao();
+		List<Book> bookList = bookDao.getBorrowed(userId);
 		
-		return bookDao.getBorrowed();
+		return bookList;
+	}
+	
+	// 查询可借的书籍
+	public List<Book> getBorrowAvailable() {
+		BookDao bookDao = new BookDao();
+		List<Book> bookList = bookDao.getBorrowAvailable();
+
+		return bookList;
 	}
 	
 	// 更新书籍
@@ -170,14 +179,34 @@ public class BookService {
 		return result;
 	}
 	
-	// 借／还书
-	public Map<String, Object> borrow(int isbn, boolean isBorrow) {
+	// 借书
+	public Map<String, Object> borrowBook(int userId, int isbn) {
 		Map<String, Object> result = new HashMap<String, Object>();
 		BookDao bookDao = new BookDao();
+
+        if (bookDao.borrowBook(userId, isbn)) {
+        	result.put("msg", "借阅成功");
+        	result.put("success", true);
+        } else {
+        	result.put("msg", "借阅失败");
+        	result.put("success", true);
+        }
 		
-		bookDao.borrow(isbn, isBorrow);
-		result.put("success", true);
-		result.put("msg", isBorrow ? "已成功借阅" : "已归还成功");
+		return result;
+	};
+	
+	// 还书
+	public Map<String, Object> returnBook(int userId, int isbn) {
+		Map<String, Object> result = new HashMap<String, Object>();
+		BookDao bookDao = new BookDao();
+
+        if (bookDao.returnBook(userId, isbn)) {
+        	result.put("msg", "归还成功");
+        	result.put("success", true);
+        } else {
+        	result.put("msg", "归还失败");
+        	result.put("success", true);
+        }
 		
 		return result;
 	}

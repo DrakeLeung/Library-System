@@ -16,7 +16,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableModel;
 
@@ -32,17 +31,16 @@ public class UserView extends JFrame {
 		setUser(user);
 		initUI();
 	}
+	public UserView() {
+		initUI();
+	}
 
 	private void initUI() {
 		createBookTable();
 		createToolbar();
 		createTitle();
-
-        JLabel statusbar = new JLabel("你好, " + 
-        		getUser().getUsername() + " . 欢迎使用GDUT图书管理系统．");
-        statusbar.setPreferredSize(new Dimension(-1, 22));
-        statusbar.setBorder(LineBorder.createGrayLineBorder());
-        add(statusbar, BorderLayout.SOUTH);
+		createStatusBar();
+		
         
         setTitle("GDUT 图书管理系统");
         setSize(400, 350);
@@ -51,13 +49,61 @@ public class UserView extends JFrame {
         setVisible(true);
 	}
 
-	// 标题
+	// 上方工具栏
 	private void createTitle() {
-		JLabel title = new JLabel("所有图书: ");
-		title.setBorder(new EmptyBorder(5, 0, 5, 0));
-		title.setHorizontalAlignment(JLabel.CENTER);
+		JToolBar bookToolbar = new JToolBar();
 		
-		add(title, BorderLayout.NORTH);
+		// 所有可借图书按钮
+		JButton allBookBtn = new JButton("可借图书");
+		
+		allBookBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				BookService bookService = new BookService();
+				BookTableModel bookTableModel = new BookTableModel();
+				
+				bookTableModel.setData(bookService.getBorrowAvailable());
+				
+				getBookTable().setModel(bookTableModel);
+			}
+		});
+		
+		// 已借图书按钮
+		JButton borrowedBookBtn = new JButton("已借图书");
+
+		borrowedBookBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				BookService bookService = new BookService();
+				BookTableModel bookTableModel = new BookTableModel();
+				
+				int userId = getUser().getId();
+				bookTableModel.setData(bookService.getBorrowed(userId));
+				
+				getBookTable().setModel(bookTableModel);
+			}
+		});
+		
+		
+		bookToolbar.add(borrowedBookBtn);
+		bookToolbar.add(allBookBtn);
+		add(bookToolbar, BorderLayout.NORTH);
+	}
+	
+	// 设置下方状态栏
+	private void createStatusBar() {
+		User user = getUser();
+		String username = "";
+		
+		if (user != null) {
+			username = user.getUsername();
+		}
+		
+        JLabel statusbar = new JLabel("你好, " + username + " . 欢迎使用GDUT图书管理系统．");
+        
+        statusbar.setPreferredSize(new Dimension(-1, 22));
+        statusbar.setBorder(LineBorder.createGrayLineBorder());
+        add(statusbar, BorderLayout.SOUTH);
 	}
 
 	// 右侧工具栏
@@ -72,28 +118,32 @@ public class UserView extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JPanel panel = (JPanel)getContentPane();
+
+				// 获取选中行的书籍的isbn
 				TableModel bookTableModel = getBookTable().getModel();
 				int selectedRow = getBookTable().getSelectedRow();
-				int isbn = (int) bookTableModel.getValueAt(selectedRow, 0);
-				boolean isBorrowed = (boolean) bookTableModel.getValueAt(selectedRow, 4);
-				
-				if (isBorrowed) {
-					ViewUtil.showErrorMsg(panel, "此书已被借阅");
+				int isbn = 0;
+
+				if (selectedRow == -1) {
+					ViewUtil.showErrorMsg(panel, "请选择一本书");
+					return;
 				} else {
-					boolean isBorrow = true; // true表示借书
-					
-					BookService bookService = new BookService();
-					Map<String, Object> result = bookService.borrow(isbn, isBorrow);
-					
-					
-					if ((boolean) result.get("success")) {
-						// 为了更新MainView里面的book table　= =!
-						List<Book> bookList =  bookService.query(); // 获取所有书籍
-						((BookTableModel) bookTableModel).setData(bookList);
-						getBookTable().setModel(bookTableModel);
-						
-						ViewUtil.showSuccessMsg(panel, result.get("msg").toString());
-					}
+					isbn = (int) bookTableModel.getValueAt(selectedRow, 0);
+				}
+
+				// 调用接口
+				BookService bookService = new BookService();
+				Map<String, Object> result = bookService.borrowBook(getUser()
+						.getId(), isbn);
+				
+				// 查询结果
+				if ((boolean) result.get("success")) {
+					// 为了更新MainView里面的book table　= =!
+					List<Book> bookList = bookService.getBorrowAvailable(); // 获取所有书籍
+					((BookTableModel) bookTableModel).setData(bookList);
+					getBookTable().setModel(bookTableModel);
+
+					ViewUtil.showSuccessMsg(panel, result.get("msg").toString());
 				}
 			}
 		});
@@ -105,26 +155,34 @@ public class UserView extends JFrame {
 				JPanel panel = (JPanel)getContentPane();
 				TableModel bookTableModel = getBookTable().getModel();
 				int selectedRow = getBookTable().getSelectedRow();
-				int isbn = (int) bookTableModel.getValueAt(selectedRow, 0);
-				boolean isBorrowed = (boolean) bookTableModel.getValueAt(selectedRow, 4);
+				int isbn = 0;
 				
-				if (!isBorrowed) {
-					ViewUtil.showErrorMsg(panel, "你还没有借阅该书，不能归还");
+				// 检查是否选中table里面的某一行
+				if (selectedRow == -1) {
+					ViewUtil.showErrorMsg(panel, "请选择一本书");
+					return;
 				} else {
-					boolean isBorrow = false; // true表示还书
-					
-					BookService bookService = new BookService();
-					Map<String, Object> result = bookService.borrow(isbn, isBorrow);
-					
-					if ((boolean) result.get("success")) {
-						// 为了更新MainView里面的book table　= =!
-						List<Book> bookList =  bookService.query(); // 获取所有书籍
-						((BookTableModel) bookTableModel).setData(bookList);
-						getBookTable().setModel(bookTableModel);
-						
-						ViewUtil.showSuccessMsg(panel, result.get("msg").toString());
-					}
+					isbn = (int) bookTableModel.getValueAt(selectedRow, 0);
 				}
+				
+				// 获取用户id
+				int userId = 0;
+				User user = getUser();
+				if (user != null) userId = user.getId();
+
+				// 调用接口
+				BookService bookService = new BookService();
+				Map<String, Object> result = bookService.returnBook(userId, isbn);
+
+				// 返回结果
+				if ((boolean) result.get("success")) {
+					// 为了更新book table　= =!
+					List<Book> bookList = bookService.getBorrowed(userId); 
+					((BookTableModel) bookTableModel).setData(bookList);
+					getBookTable().setModel(bookTableModel);
+
+				}
+				ViewUtil.showSuccessMsg(panel, result.get("msg").toString());
 			}
 		});
 		
@@ -145,12 +203,14 @@ public class UserView extends JFrame {
 		return btn;
 	}
 	
-	// 所有藏书table
+	// 已借图书table
 	private void createBookTable() {
 		BookService bookService = new BookService();
 		BookTableModel bookTableModel = new BookTableModel();
-		
-		bookTableModel.setData(bookService.query());
+
+		// 获取已借的书
+		int userId = getUser().getId();
+		bookTableModel.setData(bookService.getBorrowed(userId));	
 		
 		JTable bookTable = new JTable(bookTableModel);
 		bookTable.setFillsViewportHeight(true);
@@ -160,10 +220,10 @@ public class UserView extends JFrame {
 	    add(scrollPane, BorderLayout.CENTER);
 	}
 	
-//	public static void main(String[] args) {
-//		new UserView();
-//	}
-//	
+	public static void main(String[] args) {
+		new UserView();
+	}
+	
 	public JTable getBookTable() {
 		return bookTable;
 	}

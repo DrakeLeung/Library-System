@@ -84,7 +84,9 @@ public class BookDao {
 		return book;
 	}
 	
-	public List<Book> getBorrowed() {
+	
+	// 获取用户已借书籍
+	public List<Book> getBorrowed(int userId) {
 		List<Book> bookBorrowed = new LinkedList<Book>();
 		Connection conn = DBUtil.getConnection();
 		ResultSet rs = null;
@@ -92,7 +94,7 @@ public class BookDao {
 		try {
 			// 先找出用户借过的书的isbn
 			Statement st = conn.createStatement();
-			String sql = "SELECT * FROM book WHERE isBorrowed=false";
+			String sql = "SELECT * FROM book WHERE isbn in (SELECT book_isbn FROM user_book_borrowed WHERE user_id=" + userId + ")";
 			rs = st.executeQuery(sql);
 			
 			while (rs.next()) {
@@ -112,10 +114,10 @@ public class BookDao {
 		
 		return bookBorrowed;
 	}
-	
+
+	// 获取所有书籍
 	public List<Book> query() {
 		Connection conn = DBUtil.getConnection();
-		
 		List<Book> bookList = new LinkedList<Book>();
 		
 		try {
@@ -143,6 +145,36 @@ public class BookDao {
 		return bookList;
 	}
 	
+	// 查询可借书籍
+	public List<Book> getBorrowAvailable() {
+		Connection conn = DBUtil.getConnection();
+		List<Book> bookList = new LinkedList<Book>();
+		
+		try {
+			Statement st = conn.createStatement();
+			String sql = "SELECT * FROM book WHERE isBorrowed=false";
+			ResultSet rs = st.executeQuery(sql);
+			
+			while (rs.next()) {
+				Book book = new Book();
+				
+				book.setIsbn(rs.getInt("isbn"));
+				book.setTitle(rs.getString("title"));
+				book.setAuthor(rs.getString("author"));
+				book.setPrice(rs.getFloat("price"));
+				book.setIsBorrowed(rs.getBoolean("isBorrowed"));
+				
+				bookList.add(book);
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+			
+		return bookList;
+	}
+
+	// 根据书名模糊查询书籍
 	public List<Book> query(String title) {
 		Connection conn = DBUtil.getConnection();
 		List<Book> bookList = new ArrayList<Book>();
@@ -200,27 +232,57 @@ public class BookDao {
 		
 	}
 	
-	// 借/还书
-	public void borrow(int isbn, boolean isBorrow) {
+	// 还书
+	public boolean returnBook(int userId, int isbn) {
 		Connection conn = DBUtil.getConnection();
-		
-		String sql = "UPDATE book" + 
-				" SET isBorrowed=?" + 
-				" WHERE isbn=?";
-		
+		String sql = "DELETE FROM user_book_borrowed WHERE user_id=? and book_isbn=?";
+		PreparedStatement pst = null;
+
 		try {
-			PreparedStatement pst = conn.prepareStatement(sql);
-			
-			pst.setBoolean(1, isBorrow);
+			pst = conn.prepareStatement(sql);
+			pst.setInt(1, userId);
 			pst.setInt(2, isbn);
-			
+
 			pst.execute();
-			
+
 		} catch (SQLException e) {
-			
 			e.printStackTrace();
+			return false;
 		}
 		
+		// 更新isBorrowed
+		Book book = get(isbn);
+		book.setIsBorrowed(false);
+		update(book);
+		
+		return true;
 	}
+	
+	// 借书
+	public boolean borrowBook(int userId, int isbn) {
+		Connection conn = DBUtil.getConnection();
+		String sql = "INSERT INTO user_book_borrowed(user_id, book_isbn) values(?, ?)";
+		PreparedStatement pst = null;
+
+		try {
+			pst = conn.prepareStatement(sql);
+			pst.setInt(1, userId);
+			pst.setInt(2, isbn);
+
+			pst.execute();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		// 更新isBorrowed
+		Book book = get(isbn);
+		book.setIsBorrowed(true);
+		update(book);
+		
+		return true;
+	}
+
 	
 }
