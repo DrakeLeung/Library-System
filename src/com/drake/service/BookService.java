@@ -24,7 +24,7 @@ public class BookService {
 		}
 		
 		// 检测书名
-		if (!title.matches("[\\S]{1,20}")) {
+		if (!title.matches("^[\\sa-zA-Z0-9_-]{1,20}$")) {
 			result.put("msg", "书名长度必须为1-20个字符");
 			return result;
 		} else {
@@ -32,7 +32,7 @@ public class BookService {
 		}
 		
 		// 检测作者
-		if (!author.matches("[\\S]{1,20}")) {
+		if (!author.matches("^[\\sa-zA-Z0-9_-]{1,20}$")) {
 			result.put("msg", "作者长度必须为1-20个字符");
 			return result;
 		} else {
@@ -40,7 +40,7 @@ public class BookService {
 		}
 		
 		// 检测价格
-		if (!price.matches("[0-9]+")) {
+		if (!price.matches("[0-9.]+")) {
 			result.put("msg", "价格必须为数字");
 			return result;
 		} else {
@@ -139,7 +139,7 @@ public class BookService {
 		}
 		
 		// 检测书名
-		if (title.toString().matches("[\\S]{1,20}")) {
+		if (title.toString().matches("^[\\sa-zA-Z0-9_-]{1,20}$")) {
 			book.setTitle(title.toString());
 		} else {
 			result.put("msg", "书名长度必须为1-20个字符");
@@ -147,7 +147,7 @@ public class BookService {
 		}
 		
 		// 检测作者
-		if (!author.toString().matches("[\\S]{1,20}")) {
+		if (!author.toString().matches("^[\\sa-zA-Z0-9_-]{1,20}$")) {
 			result.put("msg", "作者长度必须为1-20个字符");
 			return result;
 		} else {

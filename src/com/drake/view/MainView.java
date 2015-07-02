@@ -233,7 +233,9 @@ public class MainView extends JFrame {
 	public JMenu createHelpMenu() {
 		JMenu help = new JMenu("帮助");
 		JMenuItem exitItem = new JMenuItem("退出");
+		JMenuItem logoutItem = new JMenuItem("注销");
 		
+		// 退出系统
 		exitItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -241,7 +243,17 @@ public class MainView extends JFrame {
 			}
 		});
 		
+		// 注销，回到登录页面
+		logoutItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dispose();
+				new LoginView();
+			}
+		});
+		
 		help.add(exitItem);
+		help.add(logoutItem);
 		
 		return help;
 	}
